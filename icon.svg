@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="112" fill="#080c10"/>
+  <!-- Outer glow circle -->
+  <circle cx="256" cy="256" r="200" fill="none" stroke="#00d4ff" stroke-width="2" opacity="0.3"/>
+  <!-- Shuttlecock body -->
+  <ellipse cx="256" cy="290" rx="48" ry="60" fill="#00d4ff" opacity="0.9"/>
+  <!-- Shuttlecock cork tip -->
+  <ellipse cx="256" cy="345" rx="22" ry="16" fill="#ffd60a"/>
+  <!-- Feather lines -->
+  <line x1="256" y1="230" x2="210" y2="155" stroke="#00d4ff" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+  <line x1="256" y1="230" x2="228" y2="148" stroke="#00d4ff" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+  <line x1="256" y1="230" x2="248" y2="145" stroke="#00d4ff" stroke-width="3.5" stroke-linecap="round" opacity="1"/>
+  <line x1="256" y1="230" x2="268" y2="145" stroke="#00d4ff" stroke-width="3.5" stroke-linecap="round" opacity="1"/>
+  <line x1="256" y1="230" x2="284" y2="148" stroke="#00d4ff" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+  <line x1="256" y1="230" x2="302" y2="155" stroke="#00d4ff" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+  <!-- Feather arc top -->
+  <path d="M 210 158 Q 256 130 302 158" fill="none" stroke="#00d4ff" stroke-width="2.5" stroke-linecap="round" opacity="0.6"/>
+  <path d="M 220 150 Q 256 120 292 150" fill="none" stroke="#00d4ff" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+  <!-- App name -->
+  <text x="256" y="430" text-anchor="middle" font-family="Arial, sans-serif" font-weight="900" font-size="52" fill="#e8f0fe" letter-spacing="-1">CourtTrack</text>
+</svg>

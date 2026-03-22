@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>CourtTrack — Badminton Tracker</title>
+<meta name="description" content="Track badminton sessions and dues with your group — free forever"/>
+<meta name="theme-color" content="#080c10"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="CourtTrack"/>
+<link rel="manifest" href="manifest.json"/>
+<!-- Apple touch icon (inline SVG converted — replace with real PNG for best results) -->
+<link rel="apple-touch-icon" href="icon-192.png"/>
+<link rel="icon" type="image/png" href="icon-192.png"/>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #080c10;
+  --surface: #0f1520;
+  --card: #141c2a;
+  --card2: #1a2438;
+  --border: #1e2d45;
+  --border2: #243350;
+  --accent: #00d4ff;
+  --accent-dim: rgba(0,212,255,0.12);
+  --accent2: #ff6b35;
+  --accent2-dim: rgba(255,107,53,0.12);
+  --green: #00e676;
+  --green-dim: rgba(0,230,118,0.12);
+  --warn: #ff4757;
+  --warn-dim: rgba(255,71,87,0.12);
+  --text: #e8f0fe;
+  --text2: #8ba3c7;
+  --text3: #4a6080;
+  --gold: #ffd60a;
+  --gold-dim: rgba(255,214,10,0.12);
+  --radius: 14px;
+  --radius-sm: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Outfit', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+/* LANDING */
+#landing { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 20px; position: relative; overflow: hidden; }
+#landing::before { content:''; position:fixed; top:-200px; left:-200px; width:600px; height:600px; background:radial-gradient(circle,rgba(0,212,255,0.06) 0%,transparent 70%); pointer-events:none; animation:pulse 6s ease-in-out infinite; }
+#landing::after { content:''; position:fixed; bottom:-200px; right:-200px; width:500px; height:500px; background:radial-gradient(circle,rgba(255,107,53,0.05) 0%,transparent 70%); pointer-events:none; animation:pulse 8s ease-in-out infinite reverse; }
+@keyframes pulse { 0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.1);opacity:0.7} }
+.landing-logo { font-size:56px; margin-bottom:12px; animation:floatIn 0.6s cubic-bezier(0.34,1.56,0.64,1); }
+.landing-title { font-size:38px; font-weight:900; letter-spacing:-1.5px; background:linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:8px; animation:floatIn 0.6s 0.1s cubic-bezier(0.34,1.56,0.64,1) both; }
+.landing-sub { font-size:15px; color:var(--text2); font-weight:400; margin-bottom:40px; text-align:center; line-height:1.5; animation:floatIn 0.6s 0.2s cubic-bezier(0.34,1.56,0.64,1) both; }
+@keyframes floatIn { from{transform:translateY(20px) scale(0.8);opacity:0}to{transform:translateY(0) scale(1);opacity:1} }
+.landing-cards { display:flex; flex-direction:column; gap:14px; width:100%; max-width:380px; animation:floatIn 0.6s 0.3s cubic-bezier(0.34,1.56,0.64,1) both; position:relative; z-index:1; }
+.landing-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:20px; cursor:pointer; transition:all 0.2s; position:relative; overflow:hidden; }
+.landing-card::before { content:''; position:absolute; inset:0; opacity:0; transition:opacity 0.2s; }
+.landing-card.create::before { background:linear-gradient(135deg,var(--accent-dim),transparent); }
+.landing-card.join::before { background:linear-gradient(135deg,var(--accent2-dim),transparent); }
+.landing-card:hover { border-color:var(--border2); transform:translateY(-2px); }
+.landing-card:hover::before { opacity:1; }
+.landing-card:active { transform:scale(0.98); }
+.lc-icon { font-size:28px; margin-bottom:10px; }
+.lc-title { font-size:18px; font-weight:700; margin-bottom:4px; }
+.lc-title.create { color:var(--accent); }
+.lc-title.join { color:var(--accent2); }
+.lc-desc { font-size:13px; color:var(--text2); line-height:1.4; }
+.divider { display:flex; align-items:center; gap:12px; color:var(--text3); font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:1px; }
+.divider::before,.divider::after { content:''; flex:1; height:1px; background:var(--border); }
+
+/* MODALS */
+.modal-overlay { position:fixed; inset:0; background:rgba(8,12,16,0.88); backdrop-filter:blur(8px); z-index:200; display:flex; align-items:flex-end; justify-content:center; animation:fadeIn 0.2s ease; }
+@keyframes fadeIn { from{opacity:0}to{opacity:1} }
+.modal { background:var(--card); border:1px solid var(--border2); border-radius:20px 20px 0 0; padding:24px 20px 44px; width:100%; max-width:480px; animation:slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes slideUp { from{transform:translateY(100%)}to{transform:translateY(0)} }
+.modal-handle { width:36px; height:4px; background:var(--border2); border-radius:2px; margin:0 auto 20px; }
+.modal-title { font-size:20px; font-weight:800; margin-bottom:6px; }
+.modal-sub { font-size:13px; color:var(--text2); margin-bottom:20px; line-height:1.5; }
+.field { margin-bottom:14px; }
+.field label { display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--text2); margin-bottom:6px; }
+.field input { width:100%; background:var(--surface); border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:11px 14px; color:var(--text); font-family:'Outfit',sans-serif; font-size:15px; font-weight:500; outline:none; transition:border-color 0.2s; }
+.field input:focus { border-color:var(--accent); }
+.field input::placeholder { color:var(--text3); font-weight:400; }
+
+/* BUTTONS */
+.btn { display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:12px 20px; border-radius:var(--radius-sm); font-family:'Outfit',sans-serif; font-size:14px; font-weight:700; cursor:pointer; border:none; transition:all 0.15s; letter-spacing:0.2px; text-decoration:none; }
+.btn-full { width:100%; }
+.btn-accent { background:var(--accent); color:var(--bg); }
+.btn-accent:hover { filter:brightness(1.1); transform:translateY(-1px); }
+.btn-orange { background:var(--accent2); color:#fff; }
+.btn-orange:hover { filter:brightness(1.1); transform:translateY(-1px); }
+.btn-ghost { background:var(--surface); color:var(--text); border:1.5px solid var(--border); }
+.btn-ghost:hover { border-color:var(--border2); background:var(--card2); }
+.btn-danger { background:var(--warn-dim); color:var(--warn); border:1.5px solid rgba(255,71,87,0.4); }
+.btn-sm { padding:7px 13px; font-size:12px; }
+.btn:active { transform:scale(0.97) !important; }
+
+/* APP SHELL */
+#app { display:none; min-height:100vh; padding-bottom:80px; }
+.app-header { background:var(--surface); border-bottom:1px solid var(--border); padding:14px 16px; position:sticky; top:0; z-index:100; backdrop-filter:blur(12px); }
+.app-header-inner { max-width:480px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.app-header-left { display:flex; align-items:center; gap:10px; }
+.group-badge { background:var(--accent-dim); border:1px solid rgba(0,212,255,0.2); border-radius:20px; padding:4px 12px; font-size:13px; font-weight:700; color:var(--accent); max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.fb-dot { width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 6px var(--green); flex-shrink:0; }
+.fb-dot.off { background:var(--warn); box-shadow:0 0 6px var(--warn); }
+
+/* TABS */
+.tab-bar { position:fixed; bottom:0; left:0; right:0; background:var(--surface); border-top:1px solid var(--border); display:flex; z-index:100; padding-bottom:env(safe-area-inset-bottom); }
+.tab-item { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:10px 4px 8px; cursor:pointer; transition:all 0.15s; gap:3px; }
+.tab-icon { font-size:20px; transition:transform 0.15s; }
+.tab-label { font-size:10px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:0.5px; transition:color 0.15s; }
+.tab-item.active .tab-label { color:var(--accent); }
+.tab-item.active .tab-icon { transform:scale(1.15); }
+
+/* PAGES */
+.page { display:none; padding:18px 16px; max-width:480px; margin:0 auto; }
+.page.active { display:block; }
+.sec-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text3); margin-bottom:10px; margin-top:4px; }
+
+/* DATE CARD */
+.date-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:14px; }
+.date-card-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--text3); margin-bottom:10px; }
+.date-card input[type="date"] { width:100%; background:var(--surface); border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; color:var(--text); font-family:'Outfit',sans-serif; font-size:14px; font-weight:500; outline:none; margin-bottom:10px; }
+.date-card input[type="date"]:focus { border-color:var(--accent); }
+.hours-row { display:flex; align-items:center; gap:12px; }
+.hours-label { font-size:13px; color:var(--text2); flex:1; }
+.stepper { display:flex; align-items:center; background:var(--surface); border:1.5px solid var(--border); border-radius:var(--radius-sm); overflow:hidden; }
+.stepper-btn { background:none; border:none; color:var(--accent); font-size:18px; font-weight:800; width:38px; height:38px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.15s; }
+.stepper-btn:hover { background:var(--accent-dim); }
+.stepper-val { font-family:'JetBrains Mono',monospace; font-size:16px; font-weight:700; color:var(--gold); min-width:36px; text-align:center; border-left:1px solid var(--border); border-right:1px solid var(--border); height:38px; line-height:38px; }
+
+/* RATE BAR */
+.rate-bar { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:12px 14px; margin-bottom:14px; }
+.rate-bar-top { display:flex; align-items:center; gap:10px; }
+.rate-info { flex:1; font-size:13px; color:var(--text2); }
+.rate-info strong { color:var(--gold); font-weight:700; }
+.rate-editor-inline { display:none; margin-top:10px; gap:8px; align-items:center; }
+.rate-editor-inline.open { display:flex; }
+.rate-editor-inline input { flex:1; background:var(--surface); border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:8px 12px; color:var(--text); font-family:'Outfit',sans-serif; font-size:14px; font-weight:600; outline:none; }
+.rate-editor-inline input:focus { border-color:var(--gold); }
+
+/* PLAYERS */
+.players-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+.player-tile { background:var(--card); border:2px solid var(--border); border-radius:var(--radius); padding:14px 10px; text-align:center; cursor:pointer; transition:all 0.15s; position:relative; user-select:none; }
+.player-tile:active { transform:scale(0.94); }
+.player-tile.on { border-color:var(--accent); background:var(--accent-dim); }
+.player-tile .av { width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:800; margin:0 auto 8px; transition:transform 0.15s; }
+.player-tile.on .av { transform:scale(1.1); }
+.player-tile .pname { font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.player-tile .tick { position:absolute; top:7px; right:7px; font-size:13px; opacity:0; transition:opacity 0.15s; }
+.player-tile.on .tick { opacity:1; }
+
+/* MANAGE PANEL */
+.manage-panel { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-bottom:14px; display:none; }
+.manage-panel.open { display:block; }
+.manage-input-row { display:flex; gap:8px; margin-bottom:12px; }
+.manage-input-row input { flex:1; background:var(--surface); border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:9px 12px; color:var(--text); font-family:'Outfit',sans-serif; font-size:14px; font-weight:500; outline:none; }
+.manage-input-row input:focus { border-color:var(--accent); }
+.chips { display:flex; flex-wrap:wrap; gap:7px; }
+.chip { background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:5px 10px 5px 12px; font-size:12px; font-weight:500; display:flex; align-items:center; gap:6px; animation:popIn 0.2s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes popIn { from{transform:scale(0.7);opacity:0}to{transform:scale(1);opacity:1} }
+.chip-x { background:none; border:none; color:var(--warn); cursor:pointer; font-size:15px; line-height:1; padding:0; }
+
+/* SESSION CARDS */
+.session-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px; margin-bottom:10px; animation:slideIn 0.25s ease; }
+@keyframes slideIn { from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)} }
+.sc-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.sc-date { font-size:14px; font-weight:700; }
+.sc-right { display:flex; align-items:center; gap:8px; }
+.sc-hrs { background:var(--gold-dim); color:var(--gold); border:1px solid rgba(255,214,10,0.25); border-radius:6px; padding:2px 9px; font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; }
+.sc-del { background:none; border:none; color:var(--text3); cursor:pointer; font-size:15px; padding:2px 4px; transition:color 0.15s; }
+.sc-del:hover { color:var(--warn); }
+.sc-players { display:flex; flex-wrap:wrap; gap:6px; }
+.sc-chip { border-radius:20px; padding:3px 10px; font-size:12px; font-weight:500; border:1px solid transparent; }
+
+/* SUMMARY */
+.month-nav { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:12px 16px; display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.month-nav-btn { background:var(--surface); border:1.5px solid var(--border); color:var(--text); border-radius:8px; padding:5px 14px; font-size:16px; cursor:pointer; transition:background 0.15s; }
+.month-nav-btn:hover { background:var(--card2); }
+.month-label { font-size:16px; font-weight:800; }
+.stats-row { display:flex; gap:10px; margin-bottom:14px; }
+.stat-box { flex:1; background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:14px; }
+.stat-lbl { font-size:11px; color:var(--text3); font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; }
+.stat-val { font-size:26px; font-weight:900; color:var(--accent); font-family:'JetBrains Mono',monospace; }
+.due-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px; margin-bottom:10px; display:flex; align-items:center; gap:12px; animation:slideIn 0.2s ease; }
+.due-av { width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:800; flex-shrink:0; }
+.due-info { flex:1; min-width:0; }
+.due-name { font-size:14px; font-weight:600; }
+.due-sub { font-size:12px; color:var(--text2); margin-top:2px; }
+.due-amt { text-align:right; flex-shrink:0; }
+.due-amt-num { font-family:'JetBrains Mono',monospace; font-size:20px; font-weight:700; color:var(--gold); }
+.due-amt-label { font-size:10px; color:var(--text3); font-weight:600; text-transform:uppercase; letter-spacing:0.5px; }
+
+/* SHARE CARD */
+.share-card { background:linear-gradient(135deg,var(--accent-dim),var(--accent2-dim)); border:1px solid rgba(0,212,255,0.2); border-radius:var(--radius); padding:16px; margin-bottom:14px; }
+.share-card-title { font-size:13px; font-weight:700; color:var(--accent); margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+.share-url { background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text2); word-break:break-all; margin-bottom:10px; line-height:1.5; }
+.share-actions { display:flex; gap:8px; }
+
+/* INFO CARD */
+.info-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:12px; }
+.info-card-title { font-size:13px; font-weight:700; color:var(--text2); margin-bottom:12px; }
+.info-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+.info-pill { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:8px 14px; font-size:13px; color:var(--text2); }
+
+/* EMPTY */
+.empty { text-align:center; padding:40px 20px; color:var(--text3); }
+.empty-icon { font-size:44px; margin-bottom:12px; }
+.empty-title { font-size:15px; font-weight:600; color:var(--text2); margin-bottom:6px; }
+.empty-sub { font-size:13px; line-height:1.5; }
+
+/* TOAST */
+#toast { position:fixed; bottom:90px; left:50%; transform:translateX(-50%) translateY(40px); background:var(--card2); border:1px solid var(--border2); color:var(--text); padding:10px 18px; border-radius:20px; font-size:13px; font-weight:600; transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1); z-index:999; white-space:nowrap; opacity:0; pointer-events:none; box-shadow:0 4px 20px rgba(0,0,0,0.4); }
+#toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+#toast.success { background:var(--green-dim); border-color:var(--green); color:var(--green); }
+#toast.error { background:var(--warn-dim); border-color:var(--warn); color:var(--warn); }
+
+/* LOADER */
+#loader { position:fixed; inset:0; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:500; gap:16px; transition:opacity 0.3s; }
+#loader.hide { opacity:0; pointer-events:none; }
+.loader-spinner { width:40px; height:40px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg)} }
+.loader-text { font-size:14px; color:var(--text2); font-weight:500; }
+
+.leave-btn { background:none; border:none; color:var(--text3); font-size:20px; cursor:pointer; padding:4px; transition:color 0.15s; display:flex; align-items:center; }
+.leave-btn:hover { color:var(--warn); }
+input[type="number"] { -moz-appearance:textfield; }
+input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance:none; }
+
+/* INSTALL BANNER */
+#install-banner {
+  position: fixed;
+  bottom: 90px;
+  left: 12px; right: 12px;
+  background: var(--card2);
+  border: 1px solid rgba(0,212,255,0.3);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: none;
+  align-items: center;
+  gap: 12px;
+  z-index: 300;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  animation: slideUp 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  max-width: 480px;
+  margin: 0 auto;
+}
+#install-banner.show { display: flex; }
+.install-icon { font-size: 28px; flex-shrink: 0; }
+.install-text { flex: 1; }
+.install-text strong { display: block; font-size: 14px; font-weight: 700; color: var(--accent); margin-bottom: 2px; }
+.install-text span { font-size: 12px; color: var(--text2); line-height: 1.4; }
+.install-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+.install-btn-yes { background: var(--accent); color: var(--bg); border: none; border-radius: 8px; padding: 7px 14px; font-family: 'Outfit',sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.install-btn-no { background: none; border: none; color: var(--text3); font-family: 'Outfit',sans-serif; font-size: 11px; cursor: pointer; text-align: center; padding: 2px; }
+</style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div id="loader">
+  <div class="loader-spinner"></div>
+  <div class="loader-text" id="loader-text">Loading CourtTrack...</div>
+</div>
+
+<!-- LANDING -->
+<div id="landing" style="display:none;">
+  <div class="landing-logo">🏸</div>
+  <div class="landing-title">CourtTrack</div>
+  <div class="landing-sub">Track badminton sessions &amp; dues<br>with your group — free forever</div>
+  <div class="landing-cards">
+    <div class="landing-card create" onclick="openModal('modal-create')">
+      <div class="lc-icon">✨</div>
+      <div class="lc-title create">Create a Group</div>
+      <div class="lc-desc">Start a new group, add players, and get a shareable link for your team</div>
+    </div>
+    <div class="divider">or</div>
+    <div class="landing-card join" onclick="openModal('modal-join')">
+      <div class="lc-icon">🔗</div>
+      <div class="lc-title join">Join a Group</div>
+      <div class="lc-desc">Have a group code? Enter it to join your team's tracker</div>
+    </div>
+  </div>
+</div>
+
+<!-- CREATE MODAL -->
+<div class="modal-overlay" id="modal-create" style="display:none;" onclick="closeModalOutside(event,'modal-create')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">✨ Create Your Group</div>
+    <div class="modal-sub">You'll become the admin and get a shareable link to send to colleagues.</div>
+    <div class="field"><label>Group Name</label><input type="text" id="create-group-name" placeholder="e.g. Office Badminton Club" maxlength="40"/></div>
+    <div class="field"><label>Your Name (Admin)</label><input type="text" id="create-admin-name" placeholder="e.g. Rahul" maxlength="30"/></div>
+    <div class="field"><label>Admin Password <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text3)">(to delete sessions)</span></label><input type="password" id="create-admin-pass" placeholder="Choose a password"/></div>
+    <div class="field"><label>Rate per player per hour (₹)</label><input type="number" id="create-rate" value="50" min="1"/></div>
+    <button class="btn btn-accent btn-full" onclick="createGroup()" style="margin-top:4px;">🚀 Create Group</button>
+    <button class="btn btn-ghost btn-full" onclick="closeModal('modal-create')" style="margin-top:8px;">Cancel</button>
+  </div>
+</div>
+
+<!-- JOIN MODAL -->
+<div class="modal-overlay" id="modal-join" style="display:none;" onclick="closeModalOutside(event,'modal-join')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🔗 Join a Group</div>
+    <div class="modal-sub">Enter the 6-character group code shared by your admin, or just open the share link directly.</div>
+    <div class="field"><label>Group Code</label><input type="text" id="join-code" placeholder="e.g. ABC123" maxlength="6" style="text-transform:uppercase;font-family:'JetBrains Mono',monospace;font-size:20px;letter-spacing:5px;" oninput="this.value=this.value.toUpperCase()"/></div>
+    <button class="btn btn-orange btn-full" onclick="joinGroup()">Join Group →</button>
+    <button class="btn btn-ghost btn-full" onclick="closeModal('modal-join')" style="margin-top:8px;">Cancel</button>
+  </div>
+</div>
+
+<!-- ADMIN AUTH MODAL -->
+<div class="modal-overlay" id="modal-auth" style="display:none;" onclick="closeModalOutside(event,'modal-auth')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🔐 Admin Password</div>
+    <div class="modal-sub">This action requires the admin password.</div>
+    <div class="field"><label>Password</label><input type="password" id="auth-pass" placeholder="Enter admin password" onkeydown="if(event.key==='Enter') submitAuth()"/></div>
+    <button class="btn btn-accent btn-full" onclick="submitAuth()">Confirm →</button>
+    <button class="btn btn-ghost btn-full" onclick="closeModal('modal-auth')" style="margin-top:8px;">Cancel</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="app-header">
+    <div class="app-header-inner">
+      <div class="app-header-left">
+        <span style="font-size:22px;">🏸</span>
+        <div class="group-badge" id="group-name-badge">Group</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="fb-dot off" id="fb-dot" title="Firebase connection"></div>
+        <button class="leave-btn" onclick="leaveGroup()" title="Leave group">⬅️</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECORD -->
+  <div class="page active" id="page-record">
+    <div class="date-card">
+      <div class="date-card-title">📅 Session Date &amp; Duration</div>
+      <input type="date" id="session-date"/>
+      <div class="hours-row">
+        <span class="hours-label">Hours played</span>
+        <div class="stepper">
+          <button class="stepper-btn" onclick="chHours(-0.5)">−</button>
+          <div class="stepper-val" id="hours-val">1</div>
+          <button class="stepper-btn" onclick="chHours(0.5)">+</button>
+        </div>
+        <span style="font-size:12px;color:var(--text3);margin-left:4px;">hrs</span>
+      </div>
+    </div>
+
+    <div class="rate-bar">
+      <div class="rate-bar-top">
+        <div class="rate-info">₹<strong id="rate-disp">50</strong>/player/hr &nbsp;·&nbsp; <span id="hrs-note">1</span> hr session</div>
+        <button class="btn btn-ghost btn-sm" id="rate-toggle-btn" onclick="toggleRate()">✏️ Rate</button>
+      </div>
+      <div class="rate-editor-inline" id="rate-editor">
+        <input type="number" id="rate-inp" placeholder="₹ per hr" min="1"/>
+        <button class="btn btn-accent btn-sm" onclick="saveRate()">Save</button>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="sec-label" style="margin:0;">Who played today?</div>
+      <button class="btn btn-ghost btn-sm" id="manage-btn" onclick="toggleManage()">👤 Manage</button>
+    </div>
+
+    <div class="manage-panel" id="manage-panel">
+      <div class="manage-input-row">
+        <input type="text" id="new-player-inp" placeholder="Add colleague name..." maxlength="30" onkeydown="if(event.key==='Enter') addPlayer()"/>
+        <button class="btn btn-accent btn-sm" onclick="addPlayer()">Add</button>
+      </div>
+      <div class="sec-label">Current Players</div>
+      <div class="chips" id="chips-list"></div>
+    </div>
+
+    <div class="players-grid" id="players-grid"></div>
+
+    <button class="btn btn-accent btn-full" onclick="saveSession()">✅ Save Session</button>
+  </div>
+
+  <!-- SESSIONS -->
+  <div class="page" id="page-sessions">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div class="sec-label" style="margin:0;">All Sessions</div>
+      <button class="btn btn-danger btn-sm" onclick="promptClearAll()">🗑 Clear All</button>
+    </div>
+    <div id="sessions-list"></div>
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="page" id="page-summary">
+    <div class="month-nav">
+      <button class="month-nav-btn" onclick="chMonth(-1)">‹</button>
+      <span class="month-label" id="month-label">—</span>
+      <button class="month-nav-btn" onclick="chMonth(1)">›</button>
+    </div>
+    <div class="stats-row">
+      <div class="stat-box"><div class="stat-lbl">Sessions</div><div class="stat-val" id="stat-s">0</div></div>
+      <div class="stat-box"><div class="stat-lbl">Total Hours</div><div class="stat-val" id="stat-h">0</div></div>
+    </div>
+    <div class="sec-label">💰 Due Amounts</div>
+    <div id="dues-list"></div>
+  </div>
+
+  <!-- GROUP -->
+  <div class="page" id="page-group">
+    <div class="share-card">
+      <div class="share-card-title">🔗 Invite colleagues</div>
+      <div class="share-url" id="share-url-display">Loading...</div>
+      <div class="share-actions">
+        <button class="btn btn-accent btn-sm" onclick="copyLink()">📋 Copy Link</button>
+        <button class="btn btn-ghost btn-sm" onclick="shareLink()">↗️ Share</button>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-title">🆔 Group Info</div>
+      <div class="info-row">
+        <div class="info-pill">Code: <span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--accent);letter-spacing:2px;" id="group-code-disp">—</span></div>
+        <div class="info-pill" id="admin-name-disp">Admin: —</div>
+      </div>
+    </div>
+
+    <div class="info-card" id="admin-section" style="display:none;">
+      <div class="info-card-title">🔐 Admin Actions</div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.5;">Delete sessions or clear all data. Admin password required each time.</p>
+      <button class="btn btn-danger btn-full" onclick="promptClearAll()">🗑 Clear All Sessions</button>
+    </div>
+
+    <div style="margin-top:4px;">
+      <button class="btn btn-ghost btn-full" onclick="leaveGroup()">⬅️ Leave This Group</button>
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <div class="tab-item active" onclick="goTab('record')"><div class="tab-icon">📅</div><div class="tab-label">Record</div></div>
+    <div class="tab-item" onclick="goTab('sessions')"><div class="tab-icon">📋</div><div class="tab-label">Sessions</div></div>
+    <div class="tab-item" onclick="goTab('summary')"><div class="tab-icon">💰</div><div class="tab-label">Summary</div></div>
+    <div class="tab-item" onclick="goTab('group')"><div class="tab-icon">👥</div><div class="tab-label">Group</div></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, setDoc, getDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const FB_CFG = {
+  apiKey: "AIzaSyB2k6O_5EJNt9QeUG0xXFw4tc1CoKb5tMk",
+  authDomain: "badminton-attendance-tracker.firebaseapp.com",
+  projectId: "badminton-attendance-tracker",
+  storageBucket: "badminton-attendance-tracker.firebasestorage.app",
+  messagingSenderId: "1004212985506",
+  appId: "1:1004212985506:web:ca92db30fab1f3a0d041fb"
+};
+
+const fbApp = initializeApp(FB_CFG);
+const db = getFirestore(fbApp);
+
+// STATE
+let groupId=null, groupData=null, players=[], sessions=[], rate=50;
+let sessionHours=1, selectedPlayers=new Set(), monthOffset=0;
+let pendingAuthAction=null, unsubs=[];
+
+// HELPERS
+const COLORS=["#00d4ff","#ff6b35","#00e676","#ffd60a","#c77dff","#ff4757","#2ed573","#ff6348","#70a1ff","#eccc68"];
+function colorFor(n){let h=0;for(let c of n)h=(h*31+c.charCodeAt(0))&0xFFFFFF;return COLORS[Math.abs(h)%COLORS.length];}
+function initials(n){return n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);}
+function fmtDate(d){return new Date(d+'T00:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'});}
+function genCode(){return Math.random().toString(36).substring(2,8).toUpperCase();}
+function toast(msg,type=''){const t=document.getElementById('toast');t.textContent=msg;t.className='show '+(type||'');clearTimeout(t._t);t._t=setTimeout(()=>t.className='',2600);}
+function loader(show,txt=''){const el=document.getElementById('loader');if(show){el.classList.remove('hide');document.getElementById('loader-text').textContent=txt||'Loading...';}else{el.classList.add('hide');}}
+
+// MODALS
+window.openModal=id=>document.getElementById(id).style.display='flex';
+window.closeModal=id=>document.getElementById(id).style.display='none';
+window.closeModalOutside=(e,id)=>{if(e.target.id===id)closeModal(id);};
+
+function showLanding(){document.getElementById('landing').style.display='flex';document.getElementById('app').style.display='none';loader(false);}
+function showApp(){document.getElementById('landing').style.display='none';document.getElementById('app').style.display='block';loader(false);}
+
+// CREATE GROUP
+window.createGroup=async function(){
+  const name=document.getElementById('create-group-name').value.trim();
+  const admin=document.getElementById('create-admin-name').value.trim();
+  const pass=document.getElementById('create-admin-pass').value.trim();
+  const r=parseFloat(document.getElementById('create-rate').value)||50;
+  if(!name){toast('Enter a group name','error');return;}
+  if(!admin){toast('Enter your name','error');return;}
+  if(!pass){toast('Set an admin password','error');return;}
+  closeModal('modal-create');
+  loader(true,'Creating your group...');
+  let code=genCode();
+  let ex=await getDoc(doc(db,'groups',code));
+  while(ex.exists()){code=genCode();ex=await getDoc(doc(db,'groups',code));}
+  const gData={name,adminName:admin,adminPassHash:btoa(pass),rate:r,players:[],createdAt:new Date().toISOString()};
+  await setDoc(doc(db,'groups',code),gData);
+  localStorage.setItem('courttrack_group',code);
+  localStorage.setItem('courttrack_admin_'+code,btoa(pass));
+  await enterGroup(code);
+};
+
+// JOIN GROUP
+window.joinGroup=async function(){
+  const code=document.getElementById('join-code').value.trim().toUpperCase();
+  if(code.length<4){toast('Enter a valid code','error');return;}
+  closeModal('modal-join');
+  loader(true,'Joining group...');
+  const snap=await getDoc(doc(db,'groups',code));
+  if(!snap.exists()){loader(false);showLanding();toast('Group not found — check the code!','error');return;}
+  localStorage.setItem('courttrack_group',code);
+  await enterGroup(code);
+};
+
+// ENTER GROUP
+async function enterGroup(code){
+  loader(true,'Loading group...');
+  groupId=code;
+  unsubs.forEach(u=>u());unsubs=[];
+  const snap=await getDoc(doc(db,'groups',code));
+  if(!snap.exists()){toast('Group not found','error');showLanding();return;}
+  groupData=snap.data();
+  rate=groupData.rate||50;
+  players=groupData.players||[];
+  const storedPass=localStorage.getItem('courttrack_admin_'+code);
+  const isAdmin=storedPass&&storedPass===groupData.adminPassHash;
+
+  document.getElementById('group-name-badge').textContent=groupData.name;
+  document.getElementById('group-code-disp').textContent=code;
+  document.getElementById('admin-name-disp').textContent='Admin: '+groupData.adminName;
+  document.getElementById('admin-section').style.display=isAdmin?'block':'none';
+  document.getElementById('rate-disp').textContent=rate;
+  document.getElementById('rate-inp').value=rate;
+  document.getElementById('session-date').value=new Date().toISOString().split('T')[0];
+  const url=window.location.origin+window.location.pathname+'?group='+code;
+  document.getElementById('share-url-display').textContent=url;
+
+  // live sessions
+  const q=query(collection(db,'groups',code,'sessions'),orderBy('date','desc'));
+  unsubs.push(onSnapshot(q,snap=>{sessions=snap.docs.map(d=>({id:d.id,...d.data()}));renderSessions();renderSummary();}));
+
+  // live group config (rate + players)
+  unsubs.push(onSnapshot(doc(db,'groups',code),snap=>{
+    if(!snap.exists())return;
+    const d=snap.data();
+    if(d.rate&&d.rate!==rate){rate=d.rate;document.getElementById('rate-disp').textContent=rate;document.getElementById('rate-inp').value=rate;renderSummary();}
+    players=d.players||[];renderGrid();renderChips();
+  }));
+
+  document.getElementById('fb-dot').className='fb-dot';
+  renderGrid();renderChips();
+  showApp();goTab('record');
+}
+
+// LEAVE
+window.leaveGroup=function(){
+  if(!confirm('Leave this group? You can rejoin anytime with the group code.'))return;
+  unsubs.forEach(u=>u());unsubs=[];
+  groupId=null;groupData=null;sessions=[];players=[];selectedPlayers.clear();
+  localStorage.removeItem('courttrack_group');
+  document.getElementById('fb-dot').className='fb-dot off';
+  showLanding();
+};
+
+// TABS
+window.goTab=function(tab){
+  const tabs=['record','sessions','summary','group'];
+  document.querySelectorAll('.tab-item').forEach((t,i)=>t.classList.toggle('active',tabs[i]===tab));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+tab).classList.add('active');
+  if(tab==='summary')renderSummary();
+};
+
+// PLAYERS
+window.addPlayer=async function(){
+  const inp=document.getElementById('new-player-inp');
+  const name=inp.value.trim();
+  if(!name)return;
+  if(players.includes(name)){toast('Already in list!','error');return;}
+  players.push(name);inp.value='';
+  await setDoc(doc(db,'groups',groupId),{players},{merge:true});
+  toast('Added '+name,'success');
+};
+window.removePlayer=async function(name){
+  players=players.filter(p=>p!==name);selectedPlayers.delete(name);
+  await setDoc(doc(db,'groups',groupId),{players},{merge:true});
+  toast(name+' removed');
+};
+function renderGrid(){
+  const el=document.getElementById('players-grid');
+  if(!players.length){el.innerHTML=`<div style="grid-column:span 2;padding:20px 0;text-align:center;color:var(--text3);font-size:13px;">Tap <strong style="color:var(--text2)">Manage</strong> above to add players 👆</div>`;return;}
+  el.innerHTML=players.map(p=>`<div class="player-tile ${selectedPlayers.has(p)?'on':''}" onclick="togglePlayer('${p.replace(/'/g,"\\'")}')"><div class="av" style="background:${colorFor(p)}22;color:${colorFor(p)}">${initials(p)}</div><div class="pname">${p}</div><div class="tick">✅</div></div>`).join('');
+}
+function renderChips(){
+  const el=document.getElementById('chips-list');
+  if(!players.length){el.innerHTML='<span style="font-size:13px;color:var(--text3);">No players yet</span>';return;}
+  el.innerHTML=players.map(p=>`<div class="chip"><span style="color:${colorFor(p)};font-weight:700;font-size:11px;">${initials(p)}</span>${p}<button class="chip-x" onclick="removePlayer('${p.replace(/'/g,"\\'")}')">×</button></div>`).join('');
+}
+window.togglePlayer=function(name){
+  if(selectedPlayers.has(name))selectedPlayers.delete(name);else selectedPlayers.add(name);
+  renderGrid();document.getElementById('hrs-note').textContent=sessionHours;
+};
+window.toggleManage=function(){
+  const p=document.getElementById('manage-panel');const b=document.getElementById('manage-btn');
+  const open=p.classList.toggle('open');b.textContent=open?'✕ Close':'👤 Manage';
+  if(open)renderChips();
+};
+
+// HOURS
+window.chHours=function(d){
+  sessionHours=Math.max(0.5,Math.round((sessionHours+d)*2)/2);
+  document.getElementById('hours-val').textContent=sessionHours;
+  document.getElementById('hrs-note').textContent=sessionHours;
+};
+
+// RATE
+window.toggleRate=function(){
+  const ed=document.getElementById('rate-editor');const btn=document.getElementById('rate-toggle-btn');
+  const open=ed.classList.toggle('open');btn.textContent=open?'✕ Close':'✏️ Rate';
+  if(open)document.getElementById('rate-inp').value=rate;
+};
+window.saveRate=async function(){
+  const val=parseFloat(document.getElementById('rate-inp').value);
+  if(!val||val<1){toast('Enter a valid rate','error');return;}
+  rate=val;
+  await setDoc(doc(db,'groups',groupId),{rate},{merge:true});
+  document.getElementById('rate-disp').textContent=rate;
+  document.getElementById('rate-editor').classList.remove('open');
+  document.getElementById('rate-toggle-btn').textContent='✏️ Rate';
+  renderSummary();toast('✅ Rate updated for everyone','success');
+};
+
+// SAVE SESSION
+window.saveSession=async function(){
+  const dateVal=document.getElementById('session-date').value;
+  if(!dateVal){toast('Pick a date!','error');return;}
+  if(selectedPlayers.size===0){toast('Select at least one player!','error');return;}
+  try{
+    await addDoc(collection(db,'groups',groupId,'sessions'),{date:dateVal,hours:sessionHours,players:[...selectedPlayers],createdAt:new Date().toISOString()});
+    selectedPlayers.clear();renderGrid();toast('✅ Session saved!','success');
+  }catch(e){toast('Error: '+e.message,'error');}
+};
+
+// DELETE + CLEAR
+window.deleteSession=function(id){
+  pendingAuthAction=async()=>{await deleteDoc(doc(db,'groups',groupId,'sessions',id));toast('Session deleted','success');};
+  openModal('modal-auth');document.getElementById('auth-pass').value='';
+};
+window.promptClearAll=function(){
+  if(sessions.length===0){toast('No sessions to clear!','error');return;}
+  pendingAuthAction=async()=>{
+    const snap=await getDocs(collection(db,'groups',groupId,'sessions'));
+    await Promise.all(snap.docs.map(d=>deleteDoc(doc(db,'groups',groupId,'sessions',d.id))));
+    toast('✅ All sessions cleared!','success');
+  };
+  openModal('modal-auth');document.getElementById('auth-pass').value='';
+};
+window.submitAuth=async function(){
+  const pass=document.getElementById('auth-pass').value;
+  if(!pass){toast('Enter password','error');return;}
+  if(btoa(pass)!==groupData.adminPassHash){toast('❌ Wrong password!','error');return;}
+  closeModal('modal-auth');
+  if(pendingAuthAction){await pendingAuthAction();pendingAuthAction=null;}
+};
+
+// RENDER SESSIONS
+function renderSessions(){
+  const el=document.getElementById('sessions-list');
+  if(!sessions.length){el.innerHTML=`<div class="empty"><div class="empty-icon">📭</div><div class="empty-title">No sessions yet</div><div class="empty-sub">Go to Record tab to log your first session</div></div>`;return;}
+  el.innerHTML=sessions.map(s=>`<div class="session-card"><div class="sc-top"><div class="sc-date">${fmtDate(s.date)}</div><div class="sc-right"><div class="sc-hrs">${s.hours}h</div><button class="sc-del" onclick="deleteSession('${s.id}')">🗑</button></div></div><div class="sc-players">${(s.players||[]).map(p=>`<div class="sc-chip" style="background:${colorFor(p)}18;border-color:${colorFor(p)}44;color:${colorFor(p)}">${p}</div>`).join('')}</div></div>`).join('');
+}
+
+// RENDER SUMMARY
+function renderSummary(){
+  const now=new Date();const target=new Date(now.getFullYear(),now.getMonth()+monthOffset,1);
+  const yr=target.getFullYear(),mo=target.getMonth();
+  document.getElementById('month-label').textContent=target.toLocaleDateString('en-IN',{month:'long',year:'numeric'});
+  const ms=sessions.filter(s=>{const d=new Date(s.date+'T00:00:00');return d.getFullYear()===yr&&d.getMonth()===mo;});
+  document.getElementById('stat-s').textContent=ms.length;
+  document.getElementById('stat-h').textContent=ms.reduce((a,s)=>a+(s.hours||0),0);
+  const dues={};
+  for(const s of ms)for(const p of(s.players||[]))dues[p]=(dues[p]||0)+(s.hours||0);
+  const el=document.getElementById('dues-list');
+  const entries=Object.entries(dues).sort((a,b)=>b[1]-a[1]);
+  if(!entries.length){el.innerHTML=`<div class="empty"><div class="empty-icon">💸</div><div class="empty-sub">No sessions recorded this month yet</div></div>`;return;}
+  el.innerHTML=entries.map(([name,hours])=>{const amt=Math.round(hours*rate);return`<div class="due-card"><div class="due-av" style="background:${colorFor(name)}22;color:${colorFor(name)}">${initials(name)}</div><div class="due-info"><div class="due-name">${name}</div><div class="due-sub">${hours} hr${hours!==1?'s':''} played · ₹${rate}/hr</div></div><div class="due-amt"><div class="due-amt-num">₹${amt}</div><div class="due-amt-label">DUE</div></div></div>`;}).join('');
+}
+window.chMonth=d=>{monthOffset+=d;renderSummary();};
+
+// SHARE
+window.copyLink=function(){
+  const url=window.location.origin+window.location.pathname+'?group='+groupId;
+  navigator.clipboard.writeText(url).then(()=>toast('📋 Link copied!','success'));
+};
+window.shareLink=function(){
+  const url=window.location.origin+window.location.pathname+'?group='+groupId;
+  if(navigator.share)navigator.share({title:groupData.name+' — CourtTrack',text:'Join our badminton group on CourtTrack!',url});
+  else copyLink();
+};
+
+// INIT
+(async function(){
+  loader(true,'Starting CourtTrack...');
+  const params=new URLSearchParams(window.location.search);
+  const urlGroup=params.get('group');
+  if(urlGroup){await enterGroup(urlGroup.toUpperCase());return;}
+  const saved=localStorage.getItem('courttrack_group');
+  if(saved){const snap=await getDoc(doc(db,'groups',saved));if(snap.exists()){await enterGroup(saved);return;}else localStorage.removeItem('courttrack_group');}
+  showLanding();
+})();
+</script>
+<!-- INSTALL BANNER -->
+<div id="install-banner">
+  <div class="install-icon">🏸</div>
+  <div class="install-text">
+    <strong>Install CourtTrack</strong>
+    <span>Add to home screen for the full app experience</span>
+  </div>
+  <div class="install-actions">
+    <button class="install-btn-yes" id="install-btn-yes">Install</button>
+    <button class="install-btn-no" id="install-btn-no">Not now</button>
+  </div>
+</div>
+
+<script>
+// ── SERVICE WORKER REGISTRATION ──────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(reg => console.log('SW registered:', reg.scope))
+      .catch(err => console.log('SW failed:', err));
+  });
+}
+
+// ── INSTALL PROMPT ────────────────────────────────────────
+let deferredPrompt = null;
+const banner = document.getElementById('install-banner');
+const btnYes = document.getElementById('install-btn-yes');
+const btnNo  = document.getElementById('install-btn-no');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Show banner after 8 seconds so user settles in first
+  setTimeout(() => {
+    if (deferredPrompt) banner.classList.add('show');
+  }, 8000);
+});
+
+btnYes.addEventListener('click', async () => {
+  banner.classList.remove('show');
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    if (outcome === 'accepted') console.log('App installed!');
+  }
+});
+
+btnNo.addEventListener('click', () => {
+  banner.classList.remove('show');
+  deferredPrompt = null;
+  // Don't ask again this session
+});
+
+window.addEventListener('appinstalled', () => {
+  banner.classList.remove('show');
+  deferredPrompt = null;
+});
+</script>
+</body>
+</html>
